@@ -1,0 +1,6 @@
+info.txt
+.vscode
+__pycache__/
+# Environments
+.env
+env/
