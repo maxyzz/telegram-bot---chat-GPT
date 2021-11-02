@@ -11,6 +11,7 @@ import common.tg_analytics as tga
 from jinja2 import Template
 from services.country_service import CountryService
 from services.statistics_service import StatisticsService
+from services.history_service import HistoryService
 from telebot import types
 from flask import Flask, request
 
@@ -21,9 +22,11 @@ user_steps = {}
 known_users = []
 stats_service = StatisticsService()
 country_service = CountryService()
+history_service = HistoryService()
 commands = {'start': 'Start using this bot',
             'country': 'Please, write a country name',
             'statistics': 'Statistics by users queries',
+            'history': 'Please, write a country name',
             'help': 'Useful information about this bot',
             'contacts': 'Developer contacts'}
 
@@ -88,6 +91,14 @@ def country_command_handler(message):
     user_steps[cid] = 1
     bot.send_message(cid, '{0}, write name of country please'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
 
+# history command handler
+@bot.message_handler(commands=['history'])
+@send_action('typing')
+@save_user_activity()
+def history_command_handler(message):
+    cid = message.chat.id
+    user_steps[cid] = 2
+    bot.send_message(cid, '{0}, write name of country please'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
 
 # geo command handler
 @bot.message_handler(content_types=['location'])
@@ -100,6 +111,21 @@ def geo_command_handler(message):
     user_steps[cid] = 0
     bot.send_message(cid, statistics, parse_mode='HTML')
 
+# history statistics command handler
+@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 2)
+@send_action('typing')
+@save_user_activity()
+def history_statistics_command_handler(message):
+    cid = message.chat.id
+    country_name = message.text.strip()
+
+    try:
+        history_service.get_history_by_country_name(country_name, message.from_user.first_name + ' ' + message.from_user.last_name)
+    except Exception as e:
+        raise e
+
+    user_steps[cid] = 0
+    bot.send_photo(chat_id=cid, photo=open('viz.png', 'rb'))
 
 # country statistics command handler
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 1)
@@ -191,6 +217,7 @@ def default_command_handler(message):
 # # application entry point
 # if __name__ == '__main__':
 #     bot.polling(none_stop=True, interval=0)
+
 # set web hook
 server = Flask(__name__)
 
