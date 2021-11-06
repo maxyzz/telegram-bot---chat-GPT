@@ -12,3 +12,5 @@ dnspython
 python-dotenv
 matplotlib
 numpy
+schedule
+time
