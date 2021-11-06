@@ -260,25 +260,25 @@ if os.getenv('local') == 'true':
         schedule.every().day.at("10:30").do(autorun_job)
         Thread(target=schedule_checker).start() 
         bot.polling(none_stop=True, interval=0)
-    else:
-        # set web hook
-        server = Flask(__name__)
+else:
+    # set web hook
+    server = Flask(__name__)
 
-        @server.route('/' + token, methods=['POST'])
-        def get_messages():
-            bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode('utf-8'))])
-            return '!', 200
+    @server.route('/' + token, methods=['POST'])
+    def get_messages():
+        bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode('utf-8'))])
+        return '!', 200
 
-        @server.route('/')
-        def web_hook():
-            bot.remove_webhook()
-            bot.set_webhook(url=os.getenv('HEROKU_URL') + token)
-            return '!', 200
+    @server.route('/')
+    def web_hook():
+        bot.remove_webhook()
+        bot.set_webhook(url=os.getenv('HEROKU_URL') + token)
+        return '!', 200
 
-        # application entry point
-        if __name__ == '__main__':
-            # Create the job in schedule.
-            schedule.every().day.at("10:30").do(autorun_job)
-            Thread(target=schedule_checker).start() 
-            server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8443)))
+    # application entry point
+    if __name__ == '__main__':
+        # Create the job in schedule.
+        schedule.every().day.at("10:30").do(autorun_job)
+        Thread(target=schedule_checker).start() 
+        server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8443)))
 
