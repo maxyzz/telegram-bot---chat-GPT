@@ -7,6 +7,9 @@ import os
 from functools import wraps
 import codecs
 import common.tg_analytics as tga
+import schedule
+from time import sleep
+from threading import Thread
 
 from jinja2 import Template
 from services.country_service import CountryService
@@ -50,7 +53,28 @@ def send_action(action):
             return func(message, *args, **kwargs)
         return command_func
     return decorator
+# auto run job
+def autorun_job():
+    country='russia'
+    cid='-608476246'
+    try:
+        statistics = stats_service.get_statistics_by_country_name(country, 'auto run')
+    except Exception as e:
+        raise e
+    bot.send_message(cid,statistics, parse_mode='HTML')
+    sleep(1)
+    try:
+        history_service.get_history_by_country_name(country, 'auto run')
+    except Exception as e:
+        raise e
 
+    user_steps[cid] = 0
+    bot.send_photo(chat_id=cid, photo=open('viz.png', 'rb'))
+
+def schedule_checker():
+    while True:
+        schedule.run_pending()
+        sleep(1)
 
 # decorator for save user activity
 def save_user_activity():
@@ -81,6 +105,21 @@ def start_command_handler(message):
                      reply_markup=markup)
     help_command_handler(message)
 
+# New user handles
+@bot.message_handler(content_types=['new_chat_members'])
+@send_action('typing')
+@save_user_activity()
+def new_chat_user_command_handler(message):
+    cid = message.chat.id
+    try:
+        for user in message.new_chat_members:
+            if user.last_name is not None:
+                bot.send_message(cid, 'Hello, {0}, please choose command from the menu'.format(user.first_name + ' ' + user.last_name))
+            else:
+                bot.send_message(cid, 'Hello, {0}, please choose command from the menu'.format(user.first_name))
+        help_command_handler(message)
+    except Exception as e:
+            raise e
 
 # country command handler
 @bot.message_handler(commands=['country'])
@@ -89,7 +128,7 @@ def start_command_handler(message):
 def country_command_handler(message):
     cid = message.chat.id
     user_steps[cid] = 1
-    bot.send_message(cid, '{0}, write name of country please'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+    bot.send_message(cid, '{0}, please write name of country (started from / if you use groups)'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
 
 # history command handler
 @bot.message_handler(commands=['history'])
@@ -98,7 +137,7 @@ def country_command_handler(message):
 def history_command_handler(message):
     cid = message.chat.id
     user_steps[cid] = 2
-    bot.send_message(cid, '{0}, write name of country please'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+    bot.send_message(cid, '{0}, please write name of country (started from / if you use groups)'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
 
 # geo command handler
 @bot.message_handler(content_types=['location'])
@@ -117,7 +156,7 @@ def geo_command_handler(message):
 @save_user_activity()
 def history_statistics_command_handler(message):
     cid = message.chat.id
-    country_name = message.text.strip()
+    country_name = message.text.strip().replace('/','')
 
     try:
         history_service.get_history_by_country_name(country_name, message.from_user.first_name + ' ' + message.from_user.last_name)
@@ -133,7 +172,7 @@ def history_statistics_command_handler(message):
 @save_user_activity()
 def country_statistics_command_handler(message):
     cid = message.chat.id
-    country_name = message.text.strip()
+    country_name = message.text.strip().replace('/','')
 
     try:
         statistics = stats_service.get_statistics_by_country_name(country_name, message.from_user.first_name + ' ' + message.from_user.last_name)
@@ -179,7 +218,7 @@ def help_command_handler(message):
 
 
 # hi command handler
-@bot.message_handler(func=lambda message: message.text.lower() == 'hi')
+@bot.message_handler(func=lambda message: message.text == 'hi')
 @send_action('typing')
 @save_user_activity()
 def hi_command_handler(message):
@@ -214,27 +253,29 @@ def default_command_handler(message):
             template = Template(file.read())
             bot.send_message(cid, template.render(text_command=message.text), parse_mode='HTML')
 
-# # application entry point
-# if __name__ == '__main__':
-#     bot.polling(none_stop=True, interval=0)
+if os.getenv('local') == 'true':
+    # application entry point
+    if __name__ == '__main__':
+        # Create the job in schedule.
+        schedule.every().day.at("10:30").do(autorun_job)
+        Thread(target=schedule_checker).start() 
+        bot.polling(none_stop=True, interval=0)
+    else:
+        # set web hook
+        server = Flask(__name__)
 
-# set web hook
-server = Flask(__name__)
+        @server.route('/' + token, methods=['POST'])
+        def get_messages():
+            bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode('utf-8'))])
+            return '!', 200
 
+        @server.route('/')
+        def web_hook():
+            bot.remove_webhook()
+            bot.set_webhook(url=os.getenv('HEROKU_URL') + token)
+            return '!', 200
 
-@server.route('/' + token, methods=['POST'])
-def get_messages():
-    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode('utf-8'))])
-    return '!', 200
+        # application entry point
+        if __name__ == '__main__':
+            server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8443)))
 
-
-@server.route('/')
-def web_hook():
-    bot.remove_webhook()
-    bot.set_webhook(url=os.getenv('HEROKU_URL') + token)
-    return '!', 200
-
-
-# application entry point
-if __name__ == '__main__':
-    server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8443)))
