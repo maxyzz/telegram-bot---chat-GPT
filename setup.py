@@ -277,5 +277,8 @@ if os.getenv('local') == 'true':
 
         # application entry point
         if __name__ == '__main__':
+            # Create the job in schedule.
+            schedule.every().day.at("10:30").do(autorun_job)
+            Thread(target=schedule_checker).start() 
             server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8443)))
 

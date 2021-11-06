@@ -13,4 +13,3 @@ python-dotenv
 matplotlib
 numpy
 schedule
-time
