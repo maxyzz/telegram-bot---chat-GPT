@@ -70,7 +70,7 @@ def autorun_job():
         raise e
 
     user_steps[cid] = 0
-    bot.send_photo(chat_id=cid, photo=open('viz.png', 'rb'))
+    bot.send_photo(chat_id=cid, photo=open('viz_hist.png', 'rb'))
 
 def schedule_checker():
     while True:
@@ -164,7 +164,7 @@ def top_20_country_death_command_handler(message):
             raise e
     
     user_steps[cid] = 0
-    bot.send_photo(chat_id=cid, photo=open('viz.png', 'rb'))
+    bot.send_photo(chat_id=cid, photo=open('viz_stat.png', 'rb'))
 
 
 # geo command handler
@@ -192,7 +192,7 @@ def history_statistics_command_handler(message):
         raise e
 
     user_steps[cid] = 0
-    bot.send_photo(chat_id=cid, photo=open('viz.png', 'rb'))
+    bot.send_photo(chat_id=cid, photo=open('viz_hist.png', 'rb'))
 
 # country statistics command handler
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 1)

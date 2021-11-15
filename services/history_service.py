@@ -95,7 +95,7 @@ class HistoryService:
                 # x=x[:10]
                 # y=y[:10]
                 plt = self.visualize_bar_chart(x=x[::-1], x_label='Date', y=y[::-1], y_label='Total Cases', title='Daily Cases for ' + country_name.upper())
-                plt.savefig('viz.png')
+                plt.savefig('viz_hist.png')
         except Exception as e:
             raise e
 
