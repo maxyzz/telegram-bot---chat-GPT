@@ -31,7 +31,8 @@ commands = {'start': 'Start using this bot',
             'statistics': 'Statistics by users queries',
             'history': 'Please, write a country name',
             'help': 'Useful information about this bot',
-            'contacts': 'Developer contacts'}
+            'contacts': 'Developer contacts',
+            'top': 'bar chart for top 20 country deaths or top 20 daily cases'}
 
 
 def get_user_step(uid):
@@ -138,6 +139,33 @@ def history_command_handler(message):
     cid = message.chat.id
     user_steps[cid] = 2
     bot.send_message(cid, '{0}, please write name of country (started from / if you use groups)'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+
+# top 20 countries command handler
+@bot.message_handler(commands=['top'])
+@send_action('typing')
+@save_user_activity()
+def top_20_country_command_handler(message):
+    cid = message.chat.id
+    user_steps[cid] = 4
+    bot.send_message(cid, '{0}, please select /1 to view top 20 country deaths or /2 to view top 20 country daily cases'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+
+# top 20 countriy deaths command handler
+@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 4)
+@send_action('typing')
+@save_user_activity()
+def top_20_country_death_command_handler(message):
+    cid = message.chat.id
+    try:
+        if message.text.strip().replace('/','')=='1':
+            stats_service.get_top_20_country('1',message.from_user.first_name + ' ' + message.from_user.last_name)
+        elif message.text.strip().replace('/','')=='2':
+            stats_service.get_top_20_country('2',message.from_user.first_name + ' ' + message.from_user.last_name)
+    except Exception as e:
+            raise e
+    
+    user_steps[cid] = 0
+    bot.send_photo(chat_id=cid, photo=open('viz.png', 'rb'))
+
 
 # geo command handler
 @bot.message_handler(content_types=['location'])
