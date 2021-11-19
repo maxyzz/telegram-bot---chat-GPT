@@ -156,9 +156,10 @@ def top_20_country_command_handler(message):
 def top_20_country_death_command_handler(message):
     cid = message.chat.id
     try:
-        if message.text.strip().replace('/','')=='1':
+        txt=message.text.strip().replace('/','')
+        if txt[:1]=='1':
             stats_service.get_top_20_country('1',message.from_user.first_name + ' ' + message.from_user.last_name)
-        elif message.text.strip().replace('/','')=='2':
+        elif txt[:1]=='2':
             stats_service.get_top_20_country('2',message.from_user.first_name + ' ' + message.from_user.last_name)
     except Exception as e:
             raise e
