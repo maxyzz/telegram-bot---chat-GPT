@@ -19,9 +19,15 @@ Chatbot for coronavirus. You can find such chatbot with username = @zzz_info_bot
 /top: bar chart for top 20 country deaths or top 20 daily cases
 
 
+
+
 It provides data in charts and in text format
 
+
+
 It can be added to groups (commands adopted)
+
+
 
 For any suggestions/improvements - please contact me maverik@bk.ru
 
