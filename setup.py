@@ -189,7 +189,7 @@ def coin_currency_command_handler(message):
     coin_currency=message.text.strip().replace('/','').split(':')
     
     try:
-        if len(coin_currency)==0 or coin_currency[0] == 'default':
+        if len(coin_currency)==0 or 'default' in coin_currency[0]:
             coin = 'TONCOIN'
             currency = 'RUB'
         else:
