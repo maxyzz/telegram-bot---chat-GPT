@@ -15,6 +15,7 @@ from jinja2 import Template
 from services.country_service import CountryService
 from services.statistics_service import StatisticsService
 from services.history_service import HistoryService
+from services.coin_service import CoinService
 from telebot import types
 from flask import Flask, request
 
@@ -26,13 +27,16 @@ known_users = []
 stats_service = StatisticsService()
 country_service = CountryService()
 history_service = HistoryService()
+coin_service = CoinService()
 commands = {'start': 'Start using this bot',
             'country': 'Please, write a country name',
             'statistics': 'Statistics by users queries',
             'history': 'Please, write a country name',
             'help': 'Useful information about this bot',
             'contacts': 'Developer contacts',
-            'top': 'bar chart for top 20 country deaths or top 20 daily cases'}
+            'top': 'bar chart for top 20 country deaths or top 20 daily cases',
+            'COIN QUOTES':'COIN QUOTES',
+            'coin': 'Please write a coin and currency, default: TONCOIN:RUB'}
 
 
 def get_user_step(uid):
@@ -167,6 +171,36 @@ def top_20_country_death_command_handler(message):
     user_steps[cid] = 0
     bot.send_photo(chat_id=cid, photo=open('viz_stat.png', 'rb'))
 
+# query coin command handler
+@bot.message_handler(commands=['coin'])
+@send_action('typing')
+@save_user_activity()
+def coin_command_handler(message):
+    cid = message.chat.id
+    user_steps[cid] = 5
+    bot.send_message(cid, '{0}, Please write a coin and a currency, /default: TONCOIN:RUB (started from / if you use groups)'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+
+# coin command handler
+@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 5)
+@send_action('typing')
+@save_user_activity()
+def coin_currency_command_handler(message):
+    cid = message.chat.id
+    coin_currency=message.text.strip().replace('/','').split(':')
+    
+    try:
+        if len(coin_currency)==0 or coin_currency[0] == 'default':
+            coin = 'TONCOIN'
+            currency = 'RUB'
+        else:
+            coin = coin_currency[0]
+            currency = coin_currency[1]
+        statistics = coin_service.get_coin_quotes_by_coin_currency(coin,currency, message.from_user.first_name + ' ' + message.from_user.last_name)
+    except Exception as e:
+        raise e
+
+    user_steps[cid] = 0
+    bot.send_message(cid, statistics, parse_mode='HTML')
 
 # geo command handler
 @bot.message_handler(content_types=['location'])
@@ -238,11 +272,14 @@ def contacts_command_handler(message):
 @save_user_activity()
 def help_command_handler(message):
     cid = message.chat.id
-    help_text = 'The following commands are available \n'
+    help_text = 'The following commands are available \n*COVID19*:\n'
     for key in commands:
-        help_text += '/' + key + ': '
-        help_text += commands[key] + '\n'
-    help_text += 'ZZZBOT speaks english, be careful and take care'
+        if key == 'COIN QUOTES':
+            help_text += '*COIN QUOTES*:\n'
+        else:
+            help_text += '/' + key + ': '
+            help_text += commands[key] + '\n'
+    help_text += '\nZZZBOT speaks english, be careful and take care'
     bot.send_message(cid, help_text)
 
 
