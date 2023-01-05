@@ -5,6 +5,7 @@ Chatbot for coronavirus. You can find such chatbot with username = @zzz_info_bot
 **Available commands:**
 
 *COVID19*:
+
 /start: Start using this bot
 
 /country: Please, write a country name
@@ -20,9 +21,11 @@ Chatbot for coronavirus. You can find such chatbot with username = @zzz_info_bot
 /top: bar chart for top 20 country deaths or top 20 daily cases
 
 *COIN QUOTES*:
+
 /coin: Please write a coin and currency, default: TONCOIN:RUB
 
 *chatGDP*:
+
 /chat: chatGDP: type any questions
 
 
