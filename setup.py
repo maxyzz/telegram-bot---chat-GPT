@@ -8,6 +8,7 @@ from functools import wraps
 import codecs
 import common.tg_analytics as tga
 import schedule
+
 from time import sleep
 from threading import Thread
 
@@ -16,6 +17,7 @@ from services.country_service import CountryService
 from services.statistics_service import StatisticsService
 from services.history_service import HistoryService
 from services.coin_service import CoinService
+from services.chat_gpt_service import ChatGPTservice
 from telebot import types
 from flask import Flask, request
 
@@ -28,6 +30,7 @@ stats_service = StatisticsService()
 country_service = CountryService()
 history_service = HistoryService()
 coin_service = CoinService()
+chat_gpt_service = ChatGPTservice()
 commands = {'start': 'Start using this bot',
             'country': 'Please, write a country name',
             'statistics': 'Statistics by users queries',
@@ -36,8 +39,9 @@ commands = {'start': 'Start using this bot',
             'contacts': 'Developer contacts',
             'top': 'bar chart for top 20 country deaths or top 20 daily cases',
             'COIN QUOTES':'COIN QUOTES',
-            'coin': 'Please write a coin and currency, default: TONCOIN:RUB'}
-
+            'coin': 'Please write a coin and currency, default: TONCOIN:RUB',
+            'chat': 'chatGDP: type any questions'
+            }
 
 def get_user_step(uid):
     if uid in user_steps:
@@ -103,12 +107,70 @@ def save_user_activity():
 @save_user_activity()
 def start_command_handler(message):
     cid = message.chat.id
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    button_geo = types.KeyboardButton(text='send location', request_location=True)
-    markup.add(button_geo)
-    bot.send_message(cid, 'Hello, {0}, please choose command from the menu'.format(message.from_user.first_name + ' ' + message.from_user.last_name),
-                     reply_markup=markup)
-    help_command_handler(message)
+    menu1 = telebot.types.InlineKeyboardMarkup()
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: country', callback_data ='country'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: history', callback_data ='history'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: top', callback_data ='top'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'COIN QUOTES: coin', callback_data ='coin'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'ChatGPT', callback_data ='chatgpt'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'Statistics by users queries', callback_data ='statistics'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'Contacts', callback_data ='contacts'))
+    menu1.add(telebot.types.InlineKeyboardButton(text = 'Help', callback_data ='help'))
+    # markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    # button_geo = types.KeyboardButton(text='send location', request_location=True)
+    # markup.add(button_geo)
+    bot.send_message(cid, '{0}, please choose command from the menu'.format(message.from_user.first_name + ' ' + message.from_user.last_name),
+                     reply_markup=menu1)
+                 
+    # help_command_handler(message)
+
+@bot.callback_query_handler(func=lambda call: True)
+def step2(call):
+    if call.data == 'country':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        country_command_handler(call.message)
+        # bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='country')
+    elif call.data == 'statistics':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        statistics_command_handler(call.message)
+    elif call.data == 'help':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        help_command_handler(call.message)
+    elif call.data == 'chatgpt':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        chat_command_handler(call.message)
+    elif call.data == 'history':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        history_command_handler(call.message)
+    elif call.data == 'top':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        top_20_country_command_handler(call.message)
+    elif call.data == 'coin':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        coin_command_handler(call.message)
+    elif call.data == 'contacts':
+        call.message.from_user.first_name=call.from_user.first_name
+        call.message.from_user.last_name=call.from_user.last_name
+        contacts_command_handler(call.message)
+    # elif call.data == 'covid-deaths':
+    #     call.message.chat.id = 4
+    #     call.message.from_user.first_name=call.from_user.first_name
+    #     call.message.from_user.last_name=call.from_user.last_name
+    #     stats_service.get_top_20_country('1',call.message.from_user.first_name + ' ' + call.message.from_user.last_name)
+    #     # top_20_country_death_command_handler(call.message)
+    # elif call.data == 'covid-daily-cases':
+    #     call.message.chat.id = 4
+    #     call.message.from_user.first_name=call.from_user.first_name
+    #     call.message.from_user.last_name=call.from_user.last_name
+    #     call.message.text='2'
+    #     top_20_country_death_command_handler(call.message)
 
 # New user handles
 @bot.message_handler(content_types=['new_chat_members'])
@@ -134,7 +196,7 @@ def country_command_handler(message):
     cid = message.chat.id
     user_steps[cid] = 1
     bot.send_message(cid, '{0}, please write name of country (started from / if you use groups)'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
-
+    
 # history command handler
 @bot.message_handler(commands=['history'])
 @send_action('typing')
@@ -149,9 +211,13 @@ def history_command_handler(message):
 @send_action('typing')
 @save_user_activity()
 def top_20_country_command_handler(message):
+    # menu2 = telebot.types.InlineKeyboardMarkup()
+    # menu2.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: view top 20 country deaths', callback_data ='covid-deaths'))
+    # menu2.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: view top 20 country daily cases', callback_data ='covid-daily-cases'))
     cid = message.chat.id
     user_steps[cid] = 4
     bot.send_message(cid, '{0}, please select /1 to view top 20 country deaths or /2 to view top 20 country daily cases'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+    # bot.send_message(cid, '{0}, please select'.format(message.from_user.first_name + ' ' + message.from_user.last_name), reply_markup=menu2)
 
 # top 20 countriy deaths command handler
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 4)
@@ -170,6 +236,7 @@ def top_20_country_death_command_handler(message):
     
     user_steps[cid] = 0
     bot.send_photo(chat_id=cid, photo=open('viz_stat.png', 'rb'))
+    start_command_handler(message)
 
 # query coin command handler
 @bot.message_handler(commands=['coin'])
@@ -190,7 +257,7 @@ def coin_currency_command_handler(message):
     
     try:
         if len(coin_currency)==0 or 'default' in coin_currency[0]:
-            coin = 'TONCOIN'
+            coin = 'TON'
             currency = 'RUB'
         else:
             coin = coin_currency[0]
@@ -201,6 +268,29 @@ def coin_currency_command_handler(message):
 
     user_steps[cid] = 0
     bot.send_message(cid, statistics, parse_mode='HTML')
+    start_command_handler(message)
+
+# query chatGPT command handler
+@bot.message_handler(commands=['chat'])
+@send_action('typing')
+@save_user_activity()
+def chat_command_handler(message):
+    cid = message.chat.id
+    user_steps[cid] = 6
+    bot.send_message(cid, '{0}, Please write any question for AI'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+
+# chatGPT command handler
+@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 6)
+@send_action('typing')
+@save_user_activity()
+def chat_message_command_handler(message):
+    cid = message.chat.id
+    user_input = message.text
+    response_ai = chat_gpt_service.get_response_from_openai(user_input, message.from_user.first_name + ' ' + message.from_user.last_name)
+    
+    user_steps[cid] = 0
+    bot.send_message(chat_id=cid, text=response_ai)
+    start_command_handler(message)
 
 # geo command handler
 @bot.message_handler(content_types=['location'])
@@ -228,6 +318,7 @@ def history_statistics_command_handler(message):
 
     user_steps[cid] = 0
     bot.send_photo(chat_id=cid, photo=open('viz_hist.png', 'rb'))
+    start_command_handler(message)
 
 # country statistics command handler
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 1)
@@ -244,6 +335,7 @@ def country_statistics_command_handler(message):
 
     user_steps[cid] = 0
     bot.send_message(cid, statistics, parse_mode='HTML')
+    start_command_handler(message)
 
 
 # query statistics command handler
@@ -253,7 +345,7 @@ def country_statistics_command_handler(message):
 def statistics_command_handler(message):
     cid = message.chat.id
     bot.send_message(cid, stats_service.get_statistics_of_users_queries(), parse_mode='HTML')
-
+    start_command_handler(message)
 
 # contacts command handler
 @bot.message_handler(commands=['contacts'])
@@ -264,7 +356,7 @@ def contacts_command_handler(message):
     with codecs.open('templates/contacts.html', 'r', encoding='UTF-8') as file:
         template = Template(file.read())
         bot.send_message(cid, template.render(user_name=message.from_user.first_name + ' ' + message.from_user.last_name), parse_mode='HTML')
-
+        start_command_handler(message)
 
 # help command handler
 @bot.message_handler(commands=['help'])
@@ -279,7 +371,7 @@ def help_command_handler(message):
         else:
             help_text += '/' + key + ': '
             help_text += commands[key] + '\n'
-    help_text += '\nZZZBOT speaks english, be careful and take care'
+    help_text += '\nZZZBOT speaks english (except of for AI - you can use any language), be careful and take care'
     bot.send_message(cid, help_text)
 
 
