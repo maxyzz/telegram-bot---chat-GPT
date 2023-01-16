@@ -129,18 +129,6 @@ def start_command_handler(message):
     btn41=telebot.types.InlineKeyboardButton(text = 'Contacts', callback_data ='contacts')
     btn42=telebot.types.InlineKeyboardButton(text = 'Help', callback_data ='help')
     menu1.row(btn41,btn42)
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: country', callback_data ='country'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: history', callback_data ='history'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: top', callback_data ='top'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'COIN QUOTES: coin', callback_data ='coin'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'ChatGPT', callback_data ='chatgpt'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'Statistics by users queries', callback_data ='statistics'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'Contacts', callback_data ='contacts'))
-    # menu1.add(telebot.types.InlineKeyboardButton(text = 'Help', callback_data ='help'))
-
-    # markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    # button_geo = types.KeyboardButton(text='send location', request_location=True)
-    # markup.add(button_geo)
     bot.send_message(cid, '{0}, please choose command from the menu'.format(message.from_user.first_name + ' ' + message.from_user.last_name),
                      reply_markup=menu1)
                  

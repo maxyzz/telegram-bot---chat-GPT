@@ -26,7 +26,9 @@ Chatbot for coronavirus. You can find such chatbot with username = @zzz_info_bot
 
 *chatGDP*:
 
-/chat: chatGDP: type any questions
+/chat_gpt_text: chatGDP: type any questions for text answer
+
+/chat_gpt_image: chatGDP: type any questions for image answer
 
 
 
