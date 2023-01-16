@@ -156,7 +156,7 @@ class StatisticsService:
                         country.append(countryCases)
                         dataframe = list(filter(lambda x: x['country']!=countryCases,dataframe))
                     plt = self.visualize_bar_chart(x1=dailyCases, x_label1=country,x2=[],x_label2=[], title='TOP 20 countries for daily cases' )
-                plt.savefig('viz_stat.png')
+                plt.savefig('images/viz_stat.png')
         except Exception as e:
             raise e
 
