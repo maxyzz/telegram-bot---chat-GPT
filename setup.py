@@ -40,7 +40,8 @@ commands = {'start': 'Start using this bot',
             'top': 'bar chart for top 20 country deaths or top 20 daily cases',
             'COIN QUOTES':'COIN QUOTES',
             'coin': 'Please write a coin and currency, default: TONCOIN:RUB',
-            'chat': 'chatGDP: type any questions'
+            'chat_gpt_text': 'chatGDP: type any questions for text answer',
+            'chat_gpt_image': 'chatGDP: type any questions for image answer'
             }
 
 def get_user_step(uid):
@@ -100,6 +101,11 @@ def save_user_activity():
         return command_func
     return decorator
 
+#This will generate buttons for us in more elegant way
+def generate_buttons(bts_names, markup):
+    for button in bts_names:
+        markup.add(telebot.types.InlineKeyboardButton(text = button[0], callback_data =button[1]))
+    return markup
 
 # start command handler
 @bot.message_handler(commands=['start'])
@@ -108,13 +114,16 @@ def save_user_activity():
 def start_command_handler(message):
     cid = message.chat.id
     menu1 = telebot.types.InlineKeyboardMarkup()
-    btn11=telebot.types.InlineKeyboardButton(text = 'COVID 19: country', callback_data ='country')
-    btn12=telebot.types.InlineKeyboardButton(text = 'COVID 19: history', callback_data ='history')
-    menu1.row(btn11,btn12)
-    btn21=telebot.types.InlineKeyboardButton(text = 'COVID 19: top', callback_data ='top')
-    btn22=telebot.types.InlineKeyboardButton(text = 'COIN QUOTES: coin', callback_data ='coin')
-    menu1.row(btn21,btn22)
-    btn31=telebot.types.InlineKeyboardButton(text = 'ChatGPT', callback_data ='chatgpt')
+    btn11=telebot.types.InlineKeyboardButton(text = 'COVID-19', callback_data ='covid')
+    # btn11=telebot.types.InlineKeyboardButton(text = 'COVID 19: country', callback_data ='country')
+    # btn12=telebot.types.InlineKeyboardButton(text = 'COVID 19: history', callback_data ='history')
+    # btn13=telebot.types.InlineKeyboardButton(text = 'COVID 19: top', callback_data ='top')
+    menu1.row(btn11)
+    btn21=telebot.types.InlineKeyboardButton(text = 'Chat GPT', callback_data ='chatgpt')
+    # btn21=telebot.types.InlineKeyboardButton(text = 'ChatGPT: text', callback_data ='chatgpt-text')
+    # btn22=telebot.types.InlineKeyboardButton(text = 'ChatGPT: image', callback_data ='chatgpt-image')
+    menu1.row(btn21)
+    btn31=telebot.types.InlineKeyboardButton(text = 'COIN QUOTES: coin', callback_data ='coin')
     btn32=telebot.types.InlineKeyboardButton(text = 'ADM: Stats', callback_data ='statistics')
     menu1.row(btn31,btn32)
     btn41=telebot.types.InlineKeyboardButton(text = 'Contacts', callback_data ='contacts')
@@ -139,51 +148,62 @@ def start_command_handler(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def step2(call):
-    if call.data == 'country':
+    if hasattr(call, 'data'):
         call.message.from_user.first_name=call.from_user.first_name
         call.message.from_user.last_name=call.from_user.last_name
+    if call.data == 'covid':
+        #Generating keyboard markup
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup = generate_buttons([['COVID 19: country','covid-country'],
+                                ['COVID 19: history','covid-history'],
+                                ['COVID 19: top','covid-top'],
+                                ['back to main MENU','menu']], markup)
+        bot.send_message(call.message.chat.id,
+                                '{0}, please choose command from the menu'.format(call.from_user.first_name + ' ' + call.from_user.last_name),
+                                reply_markup=markup)
+    elif call.data == 'covid-country':
         country_command_handler(call.message)
-        # bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='country')
     elif call.data == 'statistics':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
         statistics_command_handler(call.message)
     elif call.data == 'help':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
         help_command_handler(call.message)
     elif call.data == 'chatgpt':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
+        #Generating keyboard markup
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup = generate_buttons([['ChatGPT: text','chatgpt-text'],
+                                ['ChatGPT: image','chatgpt-image'],
+                                ['back to main MENU','menu']], markup)
+        bot.send_message(call.message.chat.id,
+                                '{0}, please choose command from the menu'.format(call.from_user.first_name + ' ' + call.from_user.last_name),
+                                reply_markup=markup)
+    elif call.data == 'chatgpt-text':
         chat_command_handler(call.message)
-    elif call.data == 'history':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
+    elif call.data == 'chatgpt-image':
+        chat_command_handler(call.message)
+    elif call.data == 'covid-history':
         history_command_handler(call.message)
-    elif call.data == 'top':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
-        top_20_country_command_handler(call.message)
+    elif call.data == 'covid-top':
+        #Generating keyboard markup
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup = generate_buttons([['COVID 19: top 20 country deaths','covid-deaths'],
+                                ['COVID 19: top 20 country daily cases','covid-daily-cases'],
+                                ['back to main MENU','menu']], markup)
+        bot.send_message(call.message.chat.id,
+                                '{0}, please choose command from the menu'.format(call.from_user.first_name + ' ' + call.from_user.last_name),
+                                reply_markup=markup)
+        top_20_country_command_menu_handler(call.message)
     elif call.data == 'coin':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
         coin_command_handler(call.message)
     elif call.data == 'contacts':
-        call.message.from_user.first_name=call.from_user.first_name
-        call.message.from_user.last_name=call.from_user.last_name
         contacts_command_handler(call.message)
-    # elif call.data == 'covid-deaths':
-    #     call.message.chat.id = 4
-    #     call.message.from_user.first_name=call.from_user.first_name
-    #     call.message.from_user.last_name=call.from_user.last_name
-    #     stats_service.get_top_20_country('1',call.message.from_user.first_name + ' ' + call.message.from_user.last_name)
-    #     # top_20_country_death_command_handler(call.message)
-    # elif call.data == 'covid-daily-cases':
-    #     call.message.chat.id = 4
-    #     call.message.from_user.first_name=call.from_user.first_name
-    #     call.message.from_user.last_name=call.from_user.last_name
-    #     call.message.text='2'
-    #     top_20_country_death_command_handler(call.message)
+    elif call.data == 'menu':
+        start_command_handler(call.message)
+    elif call.data == 'covid-deaths':
+        call.message.text='1'
+        top_20_country_death_command_handler(call.message)
+    elif call.data == 'covid-daily-cases':
+        call.message.text='2'
+        top_20_country_death_command_handler(call.message)
 
 # New user handles
 @bot.message_handler(content_types=['new_chat_members'])
@@ -224,13 +244,17 @@ def history_command_handler(message):
 @send_action('typing')
 @save_user_activity()
 def top_20_country_command_handler(message):
-    # menu2 = telebot.types.InlineKeyboardMarkup()
-    # menu2.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: view top 20 country deaths', callback_data ='covid-deaths'))
-    # menu2.add(telebot.types.InlineKeyboardButton(text = 'COVID 19: view top 20 country daily cases', callback_data ='covid-daily-cases'))
     cid = message.chat.id
     user_steps[cid] = 4
     bot.send_message(cid, '{0}, please select /1 to view top 20 country deaths or /2 to view top 20 country daily cases'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
-    # bot.send_message(cid, '{0}, please select'.format(message.from_user.first_name + ' ' + message.from_user.last_name), reply_markup=menu2)
+
+# top 20 countries command menu handler
+@bot.message_handler(commands=['top'])
+@send_action('typing')
+@save_user_activity()
+def top_20_country_command_menu_handler(message):
+    cid = message.chat.id
+    user_steps[cid] = 4
 
 # top 20 countriy deaths command handler
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 4)
@@ -248,7 +272,7 @@ def top_20_country_death_command_handler(message):
             raise e
     
     user_steps[cid] = 0
-    bot.send_photo(chat_id=cid, photo=open('viz_stat.png', 'rb'))
+    bot.send_photo(chat_id=cid, photo=open('images/viz_stat.png', 'rb'))
     start_command_handler(message)
 
 # query coin command handler
@@ -283,8 +307,8 @@ def coin_currency_command_handler(message):
     bot.send_message(cid, statistics, parse_mode='HTML')
     start_command_handler(message)
 
-# query chatGPT command handler
-@bot.message_handler(commands=['chat'])
+# query chatGPT text command handler
+@bot.message_handler(commands=['chat_gpt_text'])
 @send_action('typing')
 @save_user_activity()
 def chat_command_handler(message):
@@ -292,7 +316,7 @@ def chat_command_handler(message):
     user_steps[cid] = 6
     bot.send_message(cid, '{0}, Please write any question for AI'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
 
-# chatGPT command handler
+# chatGPT text command handler
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 6)
 @send_action('typing')
 @save_user_activity()
@@ -303,6 +327,28 @@ def chat_message_command_handler(message):
     
     user_steps[cid] = 0
     bot.send_message(chat_id=cid, text=response_ai)
+    start_command_handler(message)
+
+# query chatGPT image command handler
+@bot.message_handler(commands=['chat_gpt_image'])
+@send_action('typing')
+@save_user_activity()
+def chat_command_handler(message):
+    cid = message.chat.id
+    user_steps[cid] = 7
+    bot.send_message(cid, '{0}, Please write any question for AI'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
+
+# chatGPT image command handler
+@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 7)
+@send_action('typing')
+@save_user_activity()
+def chat_message_command_handler(message):
+    cid = message.chat.id
+    user_input = message.text
+    chat_gpt_service.get_image_response_from_openai(user_input, message.from_user.first_name + ' ' + message.from_user.last_name)
+
+    user_steps[cid] = 0
+    bot.send_photo(chat_id=cid, photo=open('images/viz_responseAI.png', 'rb'))
     start_command_handler(message)
 
 # geo command handler
