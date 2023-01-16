@@ -179,7 +179,7 @@ def step2(call):
     elif call.data == 'chatgpt-text':
         chat_command_handler(call.message)
     elif call.data == 'chatgpt-image':
-        chat_command_handler(call.message)
+        chat_command_image_handler(call.message)
     elif call.data == 'covid-history':
         history_command_handler(call.message)
     elif call.data == 'covid-top':
@@ -333,7 +333,7 @@ def chat_message_command_handler(message):
 @bot.message_handler(commands=['chat_gpt_image'])
 @send_action('typing')
 @save_user_activity()
-def chat_command_handler(message):
+def chat_command_image_handler(message):
     cid = message.chat.id
     user_steps[cid] = 7
     bot.send_message(cid, '{0}, Please write any question for AI'.format(message.from_user.first_name + ' ' + message.from_user.last_name))
@@ -342,7 +342,7 @@ def chat_command_handler(message):
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 7)
 @send_action('typing')
 @save_user_activity()
-def chat_message_command_handler(message):
+def chat_message_command_image_handler(message):
     cid = message.chat.id
     user_input = message.text
     chat_gpt_service.get_image_response_from_openai(user_input, message.from_user.first_name + ' ' + message.from_user.last_name)
