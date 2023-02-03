@@ -108,7 +108,7 @@ def generate_buttons(bts_names, markup):
     return markup
 
 # start command handler
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start','menu'])
 @send_action('typing')
 @save_user_activity()
 def start_command_handler(message):
@@ -131,7 +131,6 @@ def start_command_handler(message):
     menu1.row(btn41,btn42)
     bot.send_message(cid, '{0}, please choose command from the menu'.format(message.from_user.first_name + ' ' + message.from_user.last_name),
                      reply_markup=menu1)
-                 
     # help_command_handler(message)
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -313,9 +312,9 @@ def chat_message_command_handler(message):
     user_input = message.text
     response_ai = chat_gpt_service.get_response_from_openai(user_input, message.from_user.first_name + ' ' + message.from_user.last_name)
     
-    user_steps[cid] = 0
+    user_steps[cid] = 6
     bot.send_message(chat_id=cid, text=response_ai)
-    start_command_handler(message)
+    # start_command_handler(message)
 
 # query chatGPT image command handler
 @bot.message_handler(commands=['chat_gpt_image'])
@@ -335,9 +334,9 @@ def chat_message_command_image_handler(message):
     user_input = message.text
     chat_gpt_service.get_image_response_from_openai(user_input, message.from_user.first_name + ' ' + message.from_user.last_name)
 
-    user_steps[cid] = 0
+    user_steps[cid] = 7
     bot.send_photo(chat_id=cid, photo=open('images/viz_responseAI.png', 'rb'))
-    start_command_handler(message)
+    # start_command_handler(message)
 
 # geo command handler
 @bot.message_handler(content_types=['location'])
@@ -403,7 +402,7 @@ def contacts_command_handler(message):
     with codecs.open('templates/contacts.html', 'r', encoding='UTF-8') as file:
         template = Template(file.read())
         bot.send_message(cid, template.render(user_name=message.from_user.first_name + ' ' + message.from_user.last_name), parse_mode='HTML')
-        start_command_handler(message)
+        # start_command_handler(message)
 
 # help command handler
 @bot.message_handler(commands=['help'])
