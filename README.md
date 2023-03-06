@@ -42,5 +42,5 @@ It can be added to groups (commands adopted)
 
 
 
-For any suggestions/improvements - please contact me maverik@bk.ru
+For any suggestions/improvements - please contact me - maverik@bk.ru
 
