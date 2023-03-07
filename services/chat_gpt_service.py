@@ -23,7 +23,13 @@ class ChatGPTservice:
     # method for getting response from chatGPT as text 
     def __get_response_from_openai(self, user_input):
         try:
-            response_ai = openai.Completion.create(engine=self.model, prompt=user_input, max_tokens=1024).choices[0].text
+            openai.ChatCompletion.create(model=self.model,messages=[{"role": "user", "content": user_input}],max_tokens=1024,n=1,temperature=0.5)
+            response_ai = openai.ChatCompletion.create(
+                model=self.model, 
+                messages=[{"role": "user", "content": user_input}], 
+                max_tokens=1024,
+                n=1,
+                temperature=0.5).choices[0].message.content
         except Exception as e:
             raise e
         
